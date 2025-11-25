@@ -16,7 +16,8 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 
 	"github.com/rlibaert/service-example-go/datastores"
-	"github.com/rlibaert/service-example-go/handlers"
+	"github.com/rlibaert/service-example-go/domain"
+	"github.com/rlibaert/service-example-go/restapi"
 	"github.com/rlibaert/service-example-go/router"
 )
 
@@ -68,16 +69,17 @@ func NewRouter(
 			ctxlog{}.recoverMiddleware(logger),
 		),
 		router.OptGroup(options.EndpointsPrefix,
-			router.OptGroup("/panic", router.OptAutoRegister(&handlers.Panic{})),
-			router.OptGroup("/greeting", router.OptAutoRegister(&handlers.Greeting{})),
-			router.OptGroup("/contacts", router.OptAutoRegister(&handlers.Contacts{
-				Store: datastores.MustNewContactsInmem(&datastores.Contact{
-					Firstname: "john",
-					Lastname:  "smith",
-					Birthday:  time.Date(1999, time.December, 31, 0, 0, 0, 0, time.UTC),
-				}),
-				ErrorHandler: ctxlog{}.errorHandler(logger),
-			})),
+			router.OptAutoRegister(&restapi.ServiceRegisterer{
+				Service: &domain.ServiceStore{
+					Store: datastores.MustNewStoreMock(&domain.Contact{
+						Firstname: "john",
+						Lastname:  "smith",
+						Birthday:  time.Date(1999, time.December, 31, 0, 0, 0, 0, time.UTC),
+					}),
+				},
+			}),
+			router.OptAutoRegister(&restapi.GreetRegisterer{}),
+			router.OptAutoRegister(&restapi.PanicRegisterer{}),
 		),
 	)
 }
