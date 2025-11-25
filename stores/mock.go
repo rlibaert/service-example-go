@@ -1,24 +1,25 @@
-package datastores
+package stores
 
 import (
 	"context"
 	"sync"
 
 	"github.com/google/uuid"
+
 	"github.com/rlibaert/service-example-go/domain"
 )
 
-// StoreMock is a mock implementation of [domain.Store] for testing purposes.
-type StoreMock struct {
+// Mock is a mock implementation of [domain.Store] for testing purposes.
+type Mock struct {
 	mu       sync.Mutex
 	index    map[domain.ContactID]int
 	contacts []*domain.Contact
 }
 
-var _ domain.Store = (*StoreMock)(nil)
+var _ domain.Store = (*Mock)(nil)
 
-func MustNewStoreMock(cs ...*domain.Contact) *StoreMock {
-	s := &StoreMock{index: map[domain.ContactID]int{}}
+func MustNewMock(cs ...*domain.Contact) *Mock {
+	s := &Mock{index: map[domain.ContactID]int{}}
 	for _, c := range cs {
 		_, err := s.ContactsCreate(context.Background(), c)
 		if err != nil {
@@ -28,7 +29,7 @@ func MustNewStoreMock(cs ...*domain.Contact) *StoreMock {
 	return s
 }
 
-func (s *StoreMock) Tx(ctx context.Context, f func(context.Context, domain.Store) error) error {
+func (s *Mock) Tx(ctx context.Context, f func(context.Context, domain.Store) error) error {
 	err := f(ctx, s)
 	if err != nil {
 		panic("store: cannot rollback")
@@ -36,7 +37,7 @@ func (s *StoreMock) Tx(ctx context.Context, f func(context.Context, domain.Store
 	return nil
 }
 
-func (s *StoreMock) ContactsCreate(_ context.Context, c *domain.Contact) (domain.ContactID, error) {
+func (s *Mock) ContactsCreate(_ context.Context, c *domain.Contact) (domain.ContactID, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -48,7 +49,7 @@ func (s *StoreMock) ContactsCreate(_ context.Context, c *domain.Contact) (domain
 	return c.ID, nil
 }
 
-func (s *StoreMock) ContactsRead(_ context.Context, id domain.ContactID) (*domain.Contact, error) {
+func (s *Mock) ContactsRead(_ context.Context, id domain.ContactID) (*domain.Contact, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -60,7 +61,7 @@ func (s *StoreMock) ContactsRead(_ context.Context, id domain.ContactID) (*domai
 	return s.contacts[index], nil
 }
 
-func (s *StoreMock) ContactsUpdate(_ context.Context, id domain.ContactID, c *domain.Contact) error {
+func (s *Mock) ContactsUpdate(_ context.Context, id domain.ContactID, c *domain.Contact) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -74,7 +75,7 @@ func (s *StoreMock) ContactsUpdate(_ context.Context, id domain.ContactID, c *do
 	return nil
 }
 
-func (s *StoreMock) ContactsDelete(_ context.Context, id domain.ContactID) error {
+func (s *Mock) ContactsDelete(_ context.Context, id domain.ContactID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

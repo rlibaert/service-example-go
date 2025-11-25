@@ -15,10 +15,10 @@ import (
 	"github.com/VictoriaMetrics/metrics"
 	"github.com/danielgtaylor/huma/v2"
 
-	"github.com/rlibaert/service-example-go/datastores"
 	"github.com/rlibaert/service-example-go/domain"
 	"github.com/rlibaert/service-example-go/restapi"
 	"github.com/rlibaert/service-example-go/router"
+	"github.com/rlibaert/service-example-go/stores"
 )
 
 type ServerOptions struct {
@@ -71,7 +71,7 @@ func NewRouter(
 		router.OptGroup(options.EndpointsPrefix,
 			router.OptAutoRegister(&restapi.ServiceRegisterer{
 				Service: &domain.ServiceStore{
-					Store: datastores.MustNewStoreMock(&domain.Contact{
+					Store: stores.MustNewMock(&domain.Contact{
 						Firstname: "john",
 						Lastname:  "smith",
 						Birthday:  time.Date(1999, time.December, 31, 0, 0, 0, 0, time.UTC),
