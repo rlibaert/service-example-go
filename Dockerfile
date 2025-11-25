@@ -1,3 +1,3 @@
 FROM gcr.io/distroless/static-debian12:nonroot
-COPY huma-rest-example /
-ENTRYPOINT ["/huma-rest-example"]
+COPY service-example-go /
+ENTRYPOINT ["/service-example-go"]

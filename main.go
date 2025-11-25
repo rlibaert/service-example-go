@@ -7,8 +7,8 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/humacli"
 
-	"github.com/oaiiae/huma-rest-example/cli/api"
-	"github.com/oaiiae/huma-rest-example/cli/logger"
+	"github.com/rlibaert/service-example-go/cli/api"
+	"github.com/rlibaert/service-example-go/cli/logger"
 )
 
 // Information set at build time.

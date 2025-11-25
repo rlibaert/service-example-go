@@ -32,7 +32,7 @@ dockers:
     goos: linux
     goarch: amd64
     image_templates:
-      - "ghcr.io/oaiiae/{{ .ProjectName }}:{{ .Version }}"
+      - "ghcr.io/rlibaert/{{ .ProjectName }}:{{ .Version }}"
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"

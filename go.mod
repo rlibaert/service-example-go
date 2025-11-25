@@ -1,4 +1,4 @@
-module github.com/oaiiae/huma-rest-example
+module github.com/rlibaert/service-example-go
 
 go 1.24.5
 

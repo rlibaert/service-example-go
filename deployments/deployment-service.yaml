@@ -1,57 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: huma-rest-example-deployment
+  name: service-example-go-deployment
   labels:
-    app: huma-rest-example
+    app: service-example-go
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: huma-rest-example
+      app: service-example-go
   template:
     metadata:
       labels:
-        app: huma-rest-example
+        app: service-example-go
     spec:
       containers:
-      - name: huma-rest-example
-        image: huma-rest-example:latest
+      - name: service-example-go
+      image: service-example-go:latest
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
           containerPort: 8080
-        env:
-        - name: SERVICE_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: huma-rest-example-config
-              key: SERVICE_PORT
-        - name: SERVICE_LOGGER_FORMAT
-          valueFrom:
-            configMapKeyRef:
-              name: huma-rest-example-config
-              key: SERVICE_LOGGER_FORMAT
+        envFrom:
+        - configMapRef:
+            name: service-example-go-config
         livenessProbe:
           httpGet:
             port: http
             path: /liveness
-          initialDelaySeconds: 5
-          periodSeconds: 5
         readinessProbe:
           httpGet:
             port: http
             path: /readiness
-          initialDelaySeconds: 5
-          periodSeconds: 5
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: huma-rest-example-service
+  name: service-example-go-service
 spec:
   selector:
-    app: huma-rest-example
+    app: service-example-go
   ports:
   - protocol: TCP
     port: 8080

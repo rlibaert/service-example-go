@@ -8,7 +8,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
-	ds "github.com/oaiiae/huma-rest-example/datastores"
+	ds "github.com/rlibaert/service-example-go/datastores"
 )
 
 type Contacts struct {

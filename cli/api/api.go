@@ -15,9 +15,9 @@ import (
 	"github.com/VictoriaMetrics/metrics"
 	"github.com/danielgtaylor/huma/v2"
 
-	"github.com/oaiiae/huma-rest-example/datastores"
-	"github.com/oaiiae/huma-rest-example/handlers"
-	"github.com/oaiiae/huma-rest-example/router"
+	"github.com/rlibaert/service-example-go/datastores"
+	"github.com/rlibaert/service-example-go/handlers"
+	"github.com/rlibaert/service-example-go/router"
 )
 
 type ServerOptions struct {
