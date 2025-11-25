@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -19,6 +18,7 @@ import (
 	"github.com/rlibaert/service-example-go/restapi"
 	"github.com/rlibaert/service-example-go/router"
 	"github.com/rlibaert/service-example-go/stores"
+	"github.com/rlibaert/service-example-go/wrappers"
 )
 
 type ServerOptions struct {
@@ -70,12 +70,18 @@ func NewRouter(
 		),
 		router.OptGroup(options.EndpointsPrefix,
 			router.OptAutoRegister(&restapi.ServiceRegisterer{
-				Service: &domain.ServiceStore{
-					Store: stores.MustNewMock(&domain.Contact{
-						Firstname: "john",
-						Lastname:  "smith",
-						Birthday:  time.Date(1999, time.December, 31, 0, 0, 0, 0, time.UTC),
-					}),
+				Service: wrappers.ServiceErrorHandler{
+					Service: &domain.ServiceStore{
+						Store: stores.MustNewMock(&domain.Contact{
+							Firstname: "john",
+							Lastname:  "smith",
+							Birthday:  time.Date(1999, time.December, 31, 0, 0, 0, 0, time.UTC),
+						}),
+					},
+					ErrorHandler: func(ctx context.Context, err error) {
+						ctxlog{}.get(ctx).
+							LogAttrs(context.Background(), slog.LevelError, "service error", slog.Any("err", err))
+					},
 				},
 			}),
 			router.OptAutoRegister(&restapi.GreetRegisterer{}),
@@ -107,6 +113,11 @@ func (key ctxlog) loggerMiddleware(parent *slog.Logger) func(huma.Context, func(
 	}
 }
 
+func (key ctxlog) get(ctx context.Context) *slog.Logger {
+	l, _ := ctx.Value(key).(*slog.Logger)
+	return l
+}
+
 // recoverMiddleware returns a middleware that recovers and logs the value from panic
 // to finally set the response status to [http.StatusInternalServerError].
 func (key ctxlog) recoverMiddleware(fallback *slog.Logger) func(huma.Context, func(huma.Context)) {
@@ -123,33 +134,6 @@ func (key ctxlog) recoverMiddleware(fallback *slog.Logger) func(huma.Context, fu
 			}
 		}()
 		next(ctx)
-	}
-}
-
-// errorHandler returns a function that gets the [slog.Logger] from [context.Context] and logs the error.
-func (key ctxlog) errorHandler(fallback *slog.Logger) func(context.Context, error) {
-	return func(ctx context.Context, err error) {
-		level := slog.LevelError
-		attrs := []slog.Attr{slog.Any("err", err)}
-
-		var statusErr huma.StatusError
-		if errors.As(err, &statusErr) {
-			switch statusErr.GetStatus() / 100 {
-			case 5: //nolint: mnd // 5XX HTTP Status Codes
-				level = slog.LevelError
-			case 4: //nolint: mnd // 4XX HTTP Status Codes
-				level = slog.LevelWarn
-			case 3: //nolint: mnd // 3XX HTTP Status Codes
-				level = slog.LevelInfo
-			}
-			attrs = append(attrs, slog.Int("status", statusErr.GetStatus()))
-		}
-
-		logger, ok := ctx.Value(key).(*slog.Logger)
-		if !ok {
-			logger = fallback
-		}
-		logger.LogAttrs(context.Background(), level, "error occurred", attrs...)
 	}
 }
 
