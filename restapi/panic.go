@@ -8,7 +8,7 @@ import (
 
 type PanicRegisterer struct{}
 
-func (h *PanicRegisterer) RegisterPanic(api huma.API) {
+func (PanicRegisterer) RegisterPanic(api huma.API) {
 	handler := func(context.Context, *struct{}) (*struct{}, error) {
 		panic("panic argument")
 	}

@@ -9,7 +9,7 @@ import (
 
 type GreetRegisterer struct{}
 
-func (h *GreetRegisterer) RegisterAPI(api huma.API) {
+func (GreetRegisterer) RegisterAPI(api huma.API) {
 	type input struct {
 		Who string `path:"who" maxLength:"30" example:"world" doc:"Who to greet"`
 	}

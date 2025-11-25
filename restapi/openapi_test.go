@@ -20,9 +20,11 @@ func (nopAdapter) ServeHTTP(http.ResponseWriter, *http.Request) {}
 //go:embed openapi.yaml
 var openapi []byte
 
-func TestServiceOpenAPI(t *testing.T) {
+func TestOpenAPI(t *testing.T) {
 	api := huma.NewAPI(huma.DefaultConfig("test", "dev"), nopAdapter{})
 	huma.AutoRegister(api, restapi.ServiceRegisterer{})
+	huma.AutoRegister(api, restapi.GreetRegisterer{})
+	huma.AutoRegister(api, restapi.PanicRegisterer{})
 
 	b, err := api.OpenAPI().YAML()
 	if err != nil {
@@ -35,6 +37,7 @@ func TestServiceOpenAPI(t *testing.T) {
 			t.Error(ferr)
 		}
 		defer f.Close()
+
 		f.Write(b)
 		t.Error(t.Name(), "failed, written expected results to", f.Name())
 	}
