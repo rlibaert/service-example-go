@@ -8,7 +8,7 @@ import (
 
 func TestService(t *testing.T, service domain.Service) {
 	id, _ := service.ContactsCreate(t.Context(), &domain.Contact{})
-	service.ContactsRead(t.Context(), id)
-	service.ContactsUpdate(t.Context(), id, &domain.Contact{})
-	service.ContactsDelete(t.Context(), id)
+	_, _ = service.ContactsRead(t.Context(), id)
+	_ = service.ContactsUpdate(t.Context(), id, &domain.Contact{})
+	_ = service.ContactsDelete(t.Context(), id)
 }

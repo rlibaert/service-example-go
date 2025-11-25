@@ -30,9 +30,9 @@ func TestServiceOpenAPI(t *testing.T) {
 	}
 
 	if !bytes.Equal(b, openapi) {
-		f, err := os.CreateTemp("", "openapi_*.yaml")
-		if err != nil {
-			t.Error(err)
+		f, ferr := os.CreateTemp("", "openapi_*.yaml") //nolint: usetesting // would remove the file after the test
+		if ferr != nil {
+			t.Error(ferr)
 		}
 		defer f.Close()
 		f.Write(b)
