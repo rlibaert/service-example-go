@@ -6,9 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime"
-	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/VictoriaMetrics/metrics"
@@ -64,8 +62,8 @@ func NewRouter(
 		},
 		router.OptUseMiddleware(
 			ctxlog{}.loggerMiddleware(logger),
-			meterRequestsMiddleware(metriks),
-			meterRequestsStatusMiddleware(metriks),
+			router.RequestsMetricsMiddleware(metriks),
+			router.ResponsesMetricsMiddleware(metriks),
 			ctxlog{}.recoverMiddleware(logger),
 		),
 		router.OptGroup(options.EndpointsPrefix,
@@ -134,63 +132,6 @@ func (key ctxlog) recoverMiddleware(fallback *slog.Logger) func(huma.Context, fu
 			}
 		}()
 		next(ctx)
-	}
-}
-
-// meterRequestsMiddleware returns a middleware registering metrics about requests.
-//
-//   - http_requests_in_flight{method,path}
-func meterRequestsMiddleware(set *metrics.Set) func(huma.Context, func(huma.Context)) {
-	smap := sync.Map{}
-	return func(ctx huma.Context, next func(huma.Context)) {
-		op := ctx.Operation()
-		k := op.OperationID
-		v, ok := smap.Load(k)
-		if !ok {
-			labels := joinQuote("{method=", op.Method, ",path=", op.Path, "}")
-			v, _ = smap.LoadOrStore(k,
-				set.GetOrCreateCounter("http_requests_in_flight"+labels),
-			)
-		}
-		val := v.(*metrics.Counter) //nolint: errcheck // always true
-		val.Inc()
-		defer val.Dec()
-
-		next(ctx)
-	}
-}
-
-// meterRequestsStatusMiddleware returns a middleware registering metrics about requests and their response status.
-//
-//   - http_request_duration_seconds_bucket{method,path,status,le}
-//   - http_request_duration_seconds_sum{method,path,status}
-//   - http_request_duration_seconds_count{method,path,status}
-//   - http_requests_total{method,path,status}
-func meterRequestsStatusMiddleware(set *metrics.Set) func(huma.Context, func(huma.Context)) {
-	type value struct {
-		*metrics.PrometheusHistogram
-		*metrics.Counter
-	}
-	var buckets = metrics.ExponentialBuckets(1e-3, 5, 6) //nolint: mnd // arbitrary
-
-	smap := sync.Map{}
-	return func(ctx huma.Context, next func(huma.Context)) {
-		start := time.Now()
-		next(ctx)
-
-		op := ctx.Operation()
-		k := op.OperationID + http.StatusText(ctx.Status())
-		v, ok := smap.Load(k)
-		if !ok {
-			labels := joinQuote("{method=", op.Method, ",path=", op.Path, ",status=", strconv.Itoa(ctx.Status()), "}") //nolint: golines
-			v, _ = smap.LoadOrStore(k, value{
-				set.GetOrCreatePrometheusHistogramExt("http_request_duration_seconds"+labels, buckets),
-				set.GetOrCreateCounter("http_requests_total" + labels),
-			})
-		}
-		val := v.(value) //nolint: errcheck // always true
-		val.PrometheusHistogram.UpdateDuration(start)
-		val.Counter.Inc()
 	}
 }
 

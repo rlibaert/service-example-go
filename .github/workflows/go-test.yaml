@@ -22,3 +22,6 @@ jobs:
 
     - name: Race
       run: go test -v ./... -race
+
+    - name: Bench
+      run: go test -v ./... -benchmem -bench=.
