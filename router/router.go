@@ -33,7 +33,7 @@ func OptUseMiddleware(middlewares ...func(huma.Context, func(huma.Context))) fun
 	return func(api huma.API) { api.UseMiddleware(middlewares...) }
 }
 
-// OptUseMiddleware returns a [huma.API] option to auto-detect and call a server registration methods.
+// OptAutoRegister returns a [huma.API] option to auto-detect and call a server registration methods.
 func OptAutoRegister(server any) func(huma.API) {
 	return func(api huma.API) { huma.AutoRegister(api, server) }
 }

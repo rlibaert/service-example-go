@@ -21,7 +21,7 @@ var _ domain.Store = (*Mock)(nil)
 func MustNewMock(cs ...*domain.Contact) *Mock {
 	s := &Mock{index: map[domain.ContactID]int{}}
 	for _, c := range cs {
-		_, err := s.ContactsCreate(context.Background(), c)
+		_, err := s.ContactsSet(context.Background(), c)
 		if err != nil {
 			panic(err)
 		}
@@ -29,7 +29,7 @@ func MustNewMock(cs ...*domain.Contact) *Mock {
 	return s
 }
 
-func (s *Mock) ContactsCreate(_ context.Context, c *domain.Contact) (domain.ContactID, error) {
+func (s *Mock) ContactsSet(_ context.Context, c *domain.Contact) (domain.ContactID, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -41,7 +41,7 @@ func (s *Mock) ContactsCreate(_ context.Context, c *domain.Contact) (domain.Cont
 	return c.ID, nil
 }
 
-func (s *Mock) ContactsRead(_ context.Context, id domain.ContactID) (*domain.Contact, error) {
+func (s *Mock) ContactsGet(_ context.Context, id domain.ContactID) (*domain.Contact, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -53,7 +53,7 @@ func (s *Mock) ContactsRead(_ context.Context, id domain.ContactID) (*domain.Con
 	return s.contacts[index], nil
 }
 
-func (s *Mock) ContactsUpdate(_ context.Context, id domain.ContactID, c *domain.Contact) error {
+func (s *Mock) ContactsReset(_ context.Context, id domain.ContactID, c *domain.Contact) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -67,7 +67,7 @@ func (s *Mock) ContactsUpdate(_ context.Context, id domain.ContactID, c *domain.
 	return nil
 }
 
-func (s *Mock) ContactsDelete(_ context.Context, id domain.ContactID) error {
+func (s *Mock) ContactsDel(_ context.Context, id domain.ContactID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

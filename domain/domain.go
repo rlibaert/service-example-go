@@ -8,14 +8,14 @@ import (
 
 // Store is an abstraction to an underlying storage.
 type Store interface {
-	// ContactsCreate stores a new [Contact] object and returns its [ContactID].
-	ContactsCreate(context.Context, *Contact) (ContactID, error)
-	// ContactsRead retrieves a [Contact] given its [ContactID].
-	ContactsRead(context.Context, ContactID) (*Contact, error)
-	// ContactsUpdate updates a [Contact] given its [ContactID].
-	ContactsUpdate(context.Context, ContactID, *Contact) error
-	// ContactsDelete deletes a [Contact] given its [ContactID].
-	ContactsDelete(context.Context, ContactID) error
+	// ContactsSet stores a new [Contact] object and returns its [ContactID].
+	ContactsSet(context.Context, *Contact) (ContactID, error)
+	// ContactsGet retrieves a [Contact] given its [ContactID].
+	ContactsGet(context.Context, ContactID) (*Contact, error)
+	// ContactsReset updates a [Contact] given its [ContactID].
+	ContactsReset(context.Context, ContactID, *Contact) error
+	// ContactsDel deletes a [Contact] given its [ContactID].
+	ContactsDel(context.Context, ContactID) error
 }
 
 type Service interface {
@@ -42,17 +42,17 @@ type ServiceStore struct {
 var _ Service = (*ServiceStore)(nil)
 
 func (svc *ServiceStore) ContactsCreate(ctx context.Context, c *Contact) (ContactID, error) {
-	return svc.Store.ContactsCreate(ctx, c)
+	return svc.Store.ContactsSet(ctx, c)
 }
 
 func (svc *ServiceStore) ContactsRead(ctx context.Context, id ContactID) (*Contact, error) {
-	return svc.Store.ContactsRead(ctx, id)
+	return svc.Store.ContactsGet(ctx, id)
 }
 
 func (svc *ServiceStore) ContactsUpdate(ctx context.Context, id ContactID, c *Contact) error {
-	return svc.Store.ContactsUpdate(ctx, id, c)
+	return svc.Store.ContactsReset(ctx, id, c)
 }
 
 func (svc *ServiceStore) ContactsDelete(ctx context.Context, id ContactID) error {
-	return svc.Store.ContactsDelete(ctx, id)
+	return svc.Store.ContactsDel(ctx, id)
 }
