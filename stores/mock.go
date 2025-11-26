@@ -29,14 +29,6 @@ func MustNewMock(cs ...*domain.Contact) *Mock {
 	return s
 }
 
-func (s *Mock) Tx(ctx context.Context, f func(context.Context, domain.Store) error) error {
-	err := f(ctx, s)
-	if err != nil {
-		panic("store: cannot rollback")
-	}
-	return nil
-}
-
 func (s *Mock) ContactsCreate(_ context.Context, c *domain.Contact) (domain.ContactID, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

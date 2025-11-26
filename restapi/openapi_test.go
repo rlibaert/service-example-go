@@ -23,8 +23,6 @@ var openapi []byte
 func TestOpenAPI(t *testing.T) {
 	api := huma.NewAPI(huma.DefaultConfig("test", "dev"), nopAdapter{})
 	huma.AutoRegister(api, restapi.ServiceRegisterer{})
-	huma.AutoRegister(api, restapi.GreetRegisterer{})
-	huma.AutoRegister(api, restapi.PanicRegisterer{})
 
 	b, err := api.OpenAPI().YAML()
 	if err != nil {

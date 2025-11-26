@@ -1,3 +1,4 @@
+// Package restapi provide primitives to expose [domain] with a REST interface.
 package restapi
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/rlibaert/service-example-go/domain"
 )
 
+// ServiceRegisterer registers endpoints in a [huma.API] to expose a [domain.Service] with a REST interface.
 type ServiceRegisterer struct {
 	Service domain.Service
 }

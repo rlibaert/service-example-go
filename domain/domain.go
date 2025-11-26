@@ -1,3 +1,4 @@
+// Package domain provides the core application logic & entities implementing the service.
 package domain
 
 import (
@@ -5,19 +6,26 @@ import (
 	"errors"
 )
 
+// Store is an abstraction to an underlying storage.
 type Store interface {
+	// ContactsCreate stores a new [Contact] object and returns its [ContactID].
 	ContactsCreate(context.Context, *Contact) (ContactID, error)
+	// ContactsRead retrieves a [Contact] given its [ContactID].
 	ContactsRead(context.Context, ContactID) (*Contact, error)
+	// ContactsUpdate updates a [Contact] given its [ContactID].
 	ContactsUpdate(context.Context, ContactID, *Contact) error
+	// ContactsDelete deletes a [Contact] given its [ContactID].
 	ContactsDelete(context.Context, ContactID) error
-
-	Tx(context.Context, func(ctx context.Context, tx Store) error) error
 }
 
 type Service interface {
+	// ContactsCreate stores a new [Contact] object and returns its [ContactID].
 	ContactsCreate(context.Context, *Contact) (ContactID, error)
+	// ContactsRead retrieves a [Contact] given its [ContactID].
 	ContactsRead(context.Context, ContactID) (*Contact, error)
+	// ContactsUpdate updates a [Contact] given its [ContactID].
 	ContactsUpdate(context.Context, ContactID, *Contact) error
+	// ContactsDelete deletes a [Contact] given its [ContactID].
 	ContactsDelete(context.Context, ContactID) error
 }
 
@@ -26,6 +34,7 @@ var (
 	ErrInvalid  = errors.New("domain: invalid argument")
 )
 
+// ServiceStore implements [Service] using a [Store].
 type ServiceStore struct {
 	Store Store
 }

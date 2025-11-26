@@ -88,8 +88,6 @@ func NewRouter(
 					},
 				},
 			}),
-			router.OptAutoRegister(&restapi.GreetRegisterer{}),
-			router.OptAutoRegister(&restapi.PanicRegisterer{}),
 		),
 	)
 }

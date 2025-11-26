@@ -6,6 +6,7 @@ import (
 	"github.com/rlibaert/service-example-go/domain"
 )
 
+// ServiceErrorHandler wraps a [domain.Service] to handle errors.
 type ServiceErrorHandler struct {
 	Service      domain.Service
 	ErrorHandler func(context.Context, error)

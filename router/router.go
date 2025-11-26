@@ -1,3 +1,4 @@
+// Package router provides domain-agnostic primitives to build [huma]-based routers.
 package router
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
 )
 
+// New returns a new [huma]-based router.
 func New(
 	title, version string,
 	readiness http.HandlerFunc,
@@ -26,16 +28,19 @@ func New(
 	return mux
 }
 
+// OptUseMiddleware returns a [huma.API] option to append new middlewares.
 func OptUseMiddleware(middlewares ...func(huma.Context, func(huma.Context))) func(huma.API) {
 	return func(api huma.API) { api.UseMiddleware(middlewares...) }
 }
 
+// OptUseMiddleware returns a [huma.API] option to auto-detect and call a server registration methods.
 func OptAutoRegister(server any) func(huma.API) {
 	return func(api huma.API) { huma.AutoRegister(api, server) }
 }
 
 type Prefixes []string
 
+// OptGroup returns a [huma.API] option that creates a new group to apply options.
 func (p Prefixes) OptGroup(opts ...func(huma.API)) func(huma.API) {
 	return func(api huma.API) {
 		g := huma.NewGroup(api, p...)
@@ -45,6 +50,7 @@ func (p Prefixes) OptGroup(opts ...func(huma.API)) func(huma.API) {
 	}
 }
 
+// OptGroup returns a [huma.API] option that creates a new group at a prefix to apply options.
 func OptGroup(prefix string, opts ...func(huma.API)) func(huma.API) {
 	return Prefixes{prefix}.OptGroup(opts...)
 }

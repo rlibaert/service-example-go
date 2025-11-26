@@ -92,6 +92,8 @@ func ResponsesMetricsMiddleware(set *metrics.Set) func(huma.Context, func(huma.C
 	}
 }
 
+// RecoverMiddleware returns a middleware to [recover] from [panic] and sets the
+// response status to [http.StatusInternalServerError] and handles the recovered value.
 func RecoverMiddleware(handle func(context.Context, any)) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		defer func() {
