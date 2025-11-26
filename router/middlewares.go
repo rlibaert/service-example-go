@@ -1,6 +1,8 @@
 package router
 
 import (
+	"context"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,6 +12,26 @@ import (
 	"github.com/VictoriaMetrics/metrics"
 	"github.com/danielgtaylor/huma/v2"
 )
+
+// RequestsLogMiddleware creates a [slog.Record] for done requests and calls a handling function.
+func RequestsLogMiddleware(handle func(context.Context, slog.Record)) func(huma.Context, func(huma.Context)) {
+	return func(ctx huma.Context, next func(huma.Context)) {
+		start := time.Now()
+		defer func() {
+			msg := joinSpace(ctx.Method(), ctx.URL().Path, ctx.Version().Proto)
+			rec := slog.NewRecord(time.Now(), slog.LevelInfo, msg, 0)
+			rec.AddAttrs(
+				slog.String("from", ctx.RemoteAddr()),
+				slog.String("ref", ctx.Header("Referer")),
+				slog.String("ua", ctx.Header("User-Agent")),
+				slog.Int("status", ctx.Status()),
+				slog.Duration("dur", rec.Time.Sub(start)),
+			)
+			handle(ctx.Context(), rec)
+		}()
+		next(ctx)
+	}
+}
 
 // RequestsMetricsMiddleware returns a middleware collecting requests metrics.
 //
@@ -70,5 +92,21 @@ func ResponsesMetricsMiddleware(set *metrics.Set) func(huma.Context, func(huma.C
 	}
 }
 
+func RecoverMiddleware(handle func(context.Context, any)) func(huma.Context, func(huma.Context)) {
+	return func(ctx huma.Context, next func(huma.Context)) {
+		defer func() {
+			a := recover()
+			if a != nil {
+				ctx.SetStatus(http.StatusInternalServerError)
+				handle(ctx.Context(), a)
+			}
+		}()
+		next(ctx)
+	}
+}
+
 // joinQuote is [strings.Join] with " as separator.
 func joinQuote(elems ...string) string { return strings.Join(elems, `"`) }
+
+// joinSpace is [strings.Join] with space as separator.
+func joinSpace(elems ...string) string { return strings.Join(elems, ` `) }

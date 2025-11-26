@@ -61,10 +61,15 @@ func NewRouter(
 			metrics.WriteProcessMetrics(w)
 		},
 		router.OptUseMiddleware(
-			ctxlog{}.loggerMiddleware(logger),
+			ctxlog{}.setMiddleware(logger),
+			router.RequestsLogMiddleware(func(ctx context.Context, r slog.Record) {
+				ctxlog{}.get(ctx).Handler().Handle(ctx, r) //nolint: errcheck,gosec // ignored by [slog.Logger.Log] as well
+			}),
 			router.RequestsMetricsMiddleware(metriks),
 			router.ResponsesMetricsMiddleware(metriks),
-			ctxlog{}.recoverMiddleware(logger),
+			router.RecoverMiddleware(func(ctx context.Context, a any) {
+				ctxlog{}.get(ctx).LogAttrs(ctx, slog.LevelError, "panic occurred", slog.Any("recovered", a))
+			}),
 		),
 		router.OptGroup(options.EndpointsPrefix,
 			router.OptAutoRegister(&restapi.ServiceRegisterer{
@@ -91,23 +96,11 @@ func NewRouter(
 // ctxlog is a [context.Context] key and acts as a virtual package for operations related to it.
 type ctxlog struct{}
 
-// loggerMiddleware returns a middleware that sets a [slog.Logger] in
-// the [context.Context] and logs the request after it has terminated.
-func (key ctxlog) loggerMiddleware(parent *slog.Logger) func(huma.Context, func(huma.Context)) {
+func (key ctxlog) setMiddleware(parent *slog.Logger) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		logger := parent.With("x-request-id", ctx.Header("X-Request-Id"))
-
-		start := time.Now()
-		next(huma.WithValue(ctx, key, logger.WithGroup("op").With("id", ctx.Operation().OperationID)))
-
-		logger.LogAttrs(context.Background(), slog.LevelInfo,
-			joinSpace(ctx.Operation().Method, ctx.Operation().Path, ctx.Version().Proto),
-			slog.String("from", ctx.RemoteAddr()),
-			slog.String("ref", ctx.Header("Referer")),
-			slog.String("ua", ctx.Header("User-Agent")),
-			slog.Int("status", ctx.Status()),
-			slog.Duration("dur", time.Since(start)),
-		)
+		ctx = huma.WithValue(ctx, key, logger)
+		next(ctx)
 	}
 }
 
@@ -116,27 +109,5 @@ func (key ctxlog) get(ctx context.Context) *slog.Logger {
 	return l
 }
 
-// recoverMiddleware returns a middleware that recovers and logs the value from panic
-// to finally set the response status to [http.StatusInternalServerError].
-func (key ctxlog) recoverMiddleware(fallback *slog.Logger) func(huma.Context, func(huma.Context)) {
-	return func(ctx huma.Context, next func(huma.Context)) {
-		defer func() {
-			v := recover()
-			if v != nil {
-				logger, ok := ctx.Context().Value(key).(*slog.Logger)
-				if !ok {
-					logger = fallback
-				}
-				logger.LogAttrs(context.Background(), slog.LevelError, "panic occurred", slog.Any("recovered", v))
-				ctx.SetStatus(http.StatusInternalServerError)
-			}
-		}()
-		next(ctx)
-	}
-}
-
 // joinQuote is [strings.Join] with " as separator.
 func joinQuote(elems ...string) string { return strings.Join(elems, `"`) }
-
-// joinSpace is [strings.Join] with space as separator.
-func joinSpace(elems ...string) string { return strings.Join(elems, ` `) }

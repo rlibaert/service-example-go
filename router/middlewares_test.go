@@ -3,7 +3,9 @@ package router_test
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -17,6 +19,52 @@ import (
 
 	"github.com/rlibaert/service-example-go/router"
 )
+
+func ExampleRequestsLogMiddleware() {
+	h := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			switch {
+			case len(groups) == 0 && a.Key == "time":
+				a.Value = slog.TimeValue(time.Date(2025, time.November, 26, 19, 27, 42, 0, time.UTC))
+			case len(groups) == 0 && a.Key == "dur":
+				a.Value = slog.DurationValue(time.Millisecond)
+			}
+			return a
+		},
+	})
+	handler := huma.Middlewares{router.RequestsLogMiddleware(func(ctx context.Context, r slog.Record) {
+		h.Handle(ctx, r)
+	})}.Handler(func(ctx huma.Context) {
+		ctx.SetStatus(http.StatusTeapot)
+	})
+
+	handler(humatest.NewContext(
+		nil,
+		httptest.NewRequest(http.MethodGet, "/teapot", nil),
+		httptest.NewRecorder(),
+	))
+
+	// Output:
+	// time=2025-11-26T19:27:42.000Z level=INFO msg="GET /teapot HTTP/1.1" from=192.0.2.1:1234 ref="" ua="" status=418 dur=1ms
+}
+
+func BenchmarkLog(b *testing.B) {
+	handler := huma.Middlewares{
+		router.RequestsLogMiddleware(func(context.Context, slog.Record) {}),
+	}.Handler(func(huma.Context) {})
+	ctx := humatest.NewContext(nil,
+		httptest.NewRequest(http.MethodGet, "/teapot", nil),
+		httptest.NewRecorder(),
+	)
+
+	for b.Loop() {
+		handler(ctx)
+	}
+
+	if d := b.Elapsed() / time.Duration(b.N); d > time.Microsecond {
+		b.Error(b.Name(), "is too slow: took", d, "per op")
+	}
+}
 
 func ExampleRequestsMetricsMiddleware() {
 	set := metrics.NewSet()
@@ -83,10 +131,10 @@ func BenchmarkMetrics(b *testing.B) {
 		router.RequestsMetricsMiddleware(set),
 		router.ResponsesMetricsMiddleware(set),
 	}.Handler(func(huma.Context) {})
-	op := huma.Operation{Method: http.MethodGet, Path: "/teapot"}
+	ctx := humatest.NewContext(&huma.Operation{Method: http.MethodGet, Path: "/teapot"}, nil, nil)
 
 	for b.Loop() {
-		handler(humatest.NewContext(&op, nil, nil))
+		handler(ctx)
 	}
 
 	if d := b.Elapsed() / time.Duration(b.N); d > time.Microsecond {
