@@ -63,7 +63,8 @@ func NewRouter(
 		router.OptUseMiddleware(
 			ctxlog{}.setMiddleware(logger),
 			router.RequestsLogMiddleware(func(ctx context.Context, r slog.Record) {
-				ctxlog{}.get(ctx).Handler().Handle(ctx, r) //nolint: errcheck,gosec // ignored by [slog.Logger.Log] as well
+				h := ctxlog{}.get(ctx).Handler()
+				h.Handle(ctx, r) //nolint: errcheck,gosec // ignored by [slog.Logger.Log] as well
 			}),
 			router.RequestsMetricsMiddleware(metriks),
 			router.ResponsesMetricsMiddleware(metriks),
