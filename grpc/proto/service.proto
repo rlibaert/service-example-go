@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "./proto";
+
+service Service {
+    rpc ContactsCreate (Contact) returns (ContactID);
+    rpc ContactsRead (ContactID) returns (Contact);
+    rpc ContactsDelete (ContactID) returns (Empty);
+}
+
+message ContactID {
+    string id = 1;
+}
+
+message Contact {
+    ContactID id = 1;
+    string firstname = 2;
+    string lastname = 3;
+}
+
+message Empty {}
