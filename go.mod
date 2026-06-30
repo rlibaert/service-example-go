@@ -1,6 +1,6 @@
 module github.com/rlibaert/service-example-go
 
-go 1.24.5
+go 1.26.4
 
 require (
 	github.com/VictoriaMetrics/metrics v1.44.0
